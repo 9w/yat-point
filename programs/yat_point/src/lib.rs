@@ -82,6 +82,17 @@ pub mod yat_point {
         );
         token::mint_to(cpi_ctx, lamports)?;
 
+        // 5. 민팅한 YP 토큰을 사용자 지갑이 아닌 vault에 보관 (pool 기반 스테이킹처럼 처리)
+        let transfer_ctx = CpiContext::new(
+            ctx.accounts.token_program.to_account_info(),
+            token::Transfer {
+                from: ctx.accounts.user_ata.to_account_info(),
+                to: ctx.accounts.vault_ata.to_account_info(),
+                authority: ctx.accounts.user.to_account_info(),
+            },
+        );
+        token::transfer(transfer_ctx, lamports)?;
+
         Ok(())
     }
 
@@ -131,6 +142,10 @@ pub struct Stake<'info> {
         associated_token::authority = user
     )]
     pub user_ata: Account<'info, TokenAccount>,
+
+    /// CHECK:
+    #[account(mut)]
+    pub vault_ata: Account<'info, TokenAccount>,
 
     /// CHECK:
     pub mint_authority: AccountInfo<'info>,
